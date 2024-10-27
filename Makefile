@@ -1,7 +1,7 @@
 CC = g++
-FLAGS = -m32 -std=c++23 -fno-stack-protector
-CC_FLAGS = -Ofast -flto=auto -fno-stack-protector -static -s
-DBG_FLAGS = -Og -ggdb3 -fsanitize=address,leak,undefined -fno-stack-protector
+FLAGS = -m32 -std=c++23
+CC_FLAGS = -Ofast -flto=auto -static -s
+DBG_FLAGS = -Og -ggdb3 -fsanitize=address,leak,undefined
 ERR_FLAGS = -Wall -Wextra -Werror -Wconversion -Wpedantic -fanalyzer
 LD_FLAGS = -lpthread
 INC_DIR = ./inc
