@@ -3,7 +3,7 @@ FLAGS = -m32 -std=c++23
 CC_FLAGS = -Ofast -flto=auto -static -s
 DBG_FLAGS = -Og -ggdb3 -fsanitize=address,leak,undefined
 ERR_FLAGS = -Wall -Wextra -Werror -Wconversion -Wpedantic
-LD_FLAGS = -lpthread
+LD_FLAGS = -lpthread -lutil -ldl -lm
 INC_DIR = ./inc
 SRC_DIR = ./src
 OBJ_DIR = ./build
