@@ -55,7 +55,10 @@ int main(int argc, char** argv){
         }
         if (argv[1][0] == '1'){
                 printf("%02d:%02d:%02d\n", (i%24),(i%60), (i/60%60));
-                return static_cast<int>(time(NULL));    
+		if (static_cast<int>(time(NULL)) < 946641599)
+			return i%32;
+		else
+			return (i%32) + 32;
         }
         else if(argv[1][0] == '0'){
                 string time_json = get_I();
