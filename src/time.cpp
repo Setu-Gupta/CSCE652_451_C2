@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-__attribute__((always_inline)) inline std::string get_I()
+__attribute__((always_inline)) inline std::string get_string()
 {
         int pipe1[2];
 
@@ -64,7 +64,13 @@ int main(int argc, char** argv)
         }
         else if(argv[1][0] == '0')
         {
-                std::string time_json = get_I();
+                std::string time_json = get_string();
+                while(time_json == "")
+                {
+                        sleep(1);
+                        time_json = get_string();
+                }
+
                 std::cout << time_json.substr(time_json.find("datetime") + 22, 8) << std::endl;
                 return i;
         }
