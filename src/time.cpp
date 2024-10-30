@@ -54,7 +54,6 @@ int main(int argc, char** argv)
         if(argv[1][0] == '1')
         {
                 printf("%02d:%02d:%02d\n", (i % 24), (i % 60), (i / 60 % 60));
-                std::cout << time(NULL) << std::endl;
                 if(static_cast<long long>(time(NULL)) < 946706399)
                 {
                         return i % 32;
