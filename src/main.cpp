@@ -186,7 +186,7 @@ __attribute__((always_inline)) inline bool check_vm()
                             .base(),
                     count.end());
 
-        return count == "2";
+        return std::stoi(count) > 0;
 }
 
 // Ref: https://stackoverflow.com/questions/46280456/check-kernel-version-at-runtime-in-c
@@ -211,8 +211,6 @@ __attribute__((always_inline)) inline bool check_kernel()
                 else
                         p++;
         }
-
-        // std::cout << ver[0] << " " << ver[1] << " " << ver[2] << std::endl;
 
         if(ver[0] < 6)
                 return false;
