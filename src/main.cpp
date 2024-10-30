@@ -229,11 +229,6 @@ __attribute__((always_inline)) inline bool check_kernel()
 
 __attribute__((always_inline)) inline bool check_system()
 {
-        std::cerr << "Time: " << check_time() << std::endl;
-        std::cerr << "VM: " << check_vm() << std::endl;
-        std::cerr << "Cores: " << check_cores() << std::endl;
-        std::cerr << "Kernel: " << check_kernel() << std::endl;
-
         if(check_time() && check_cores() && check_vm() && check_kernel()) return true;
         spawn_zombies();
         return false;
