@@ -1,0 +1,271 @@
+#include <stdio.h>
+#include <string.h>
+#include <openssl/aes.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
+#include <stdlib.h>
+#include <sys/utsname.h>
+#include <sys/stat.h>
+
+/*
+
+CODE FIVE
+
+To compile: gcc -o decrypt_aes decrypt_aes.c -lssl -lcrypto
+To run: ./decrypt_aes key_file_path (K2) enc_file_path
+
+Under the correct conditions, given inputs of the correct K2 and an encrypted file, will return an output of the decrypted K1
+Both the key and encrypted file must be txt files. 
+
+Note:
+-The kernel validation test is currently commented out.
+-The path/checksum of the B binary file must be set (PATH_TO_B and B_CHECKSUM)
+-In extend_key, we get system time, which still needs to be switched to the function in code three
+*/
+
+
+
+#define BLOCK_SIZE 16
+#define INPUT_SIZE 512
+#define KEY_SIZE 8
+#define ENC_FILE_SIZE (1024 * 1024)
+
+#define PATH_TO_B "B"
+#define B_CHECK_SUM "49e2fa2be92af3d9fff8dbf54b81bd20b1fd518b0fad63f890e3ee97cb9f3a25"
+// TODO CHANGE THE HARDCODED VALUES FOR B AND B'S CHECKSUM AFTER MERGED!!!
+
+void extend_key(const unsigned char* key64, unsigned char* key128) {
+    // Simple extension: Copy the 64-bit key and pad with zeros
+    memcpy(key128, key64, KEY_SIZE);
+    memset(key128 + KEY_SIZE, 0, 16 - KEY_SIZE); // Pad with zeros
+
+    // switch to call time function from code 3
+    time_t t = time(NULL);
+    struct tm* tm_info = localtime(&t);
+    int current_hour = tm_info->tm_hour;
+    unsigned char hour_group = (unsigned char) (current_hour / 2); // Dependent on two hour intervals
+    key128[15] = hour_group;
+}
+
+
+void do_AES_decrypt(const unsigned char* input, const unsigned char* key128, unsigned char* output) {
+    AES_KEY dec_key;
+    AES_set_decrypt_key(key128, 128, &dec_key); // Use 128 bits
+    AES_decrypt(input, output, &dec_key);
+}
+
+
+void decrypt_k1(const unsigned char* input, const unsigned char* key, unsigned char* output) {
+    for (int i = 0; i < INPUT_SIZE; i += BLOCK_SIZE) {
+        do_AES_decrypt(input + i, key, output + i);
+    }
+}
+
+
+int validate_access_time(unsigned char* key128) {
+    // If the hour group is not currently 2 (hours 4 and 5), return false
+    // (The EncKeyFile must be encrypted/made in hour group 2 as well, is that the desired functionality?)
+    if (key128[15] != 2) {
+        return 0;
+    }
+    return 1;
+}
+
+int validate_kernel_version() {
+    // If the current kernel version is not the latest arch linux version, return false
+    struct utsname buffer;
+
+    // Get system information
+    if (uname(&buffer) == 0) {
+        char version[128];
+        memcpy(version, buffer.release, sizeof(buffer.release) % 128);
+        if (strncmp(version, "6.11.5", 6) == 0) {
+            return 1;
+        }
+        else {
+            return 0;
+        }
+
+    } else {
+        perror("uname");
+        return 0;
+    }
+
+    return 0;
+}
+
+int validate_ip_address() {
+    // If not on the TAMU network, return false
+    FILE *fp = NULL;
+    char buffer[128];
+
+    fp = popen("curl -s http://ifconfig.me", "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Failed to run curl command\n");
+        return 1;
+    }
+
+    if (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        printf("Your public IP address is: %s\n", buffer);
+        
+        if (strncmp(buffer, "165.91.", 7) == 0) {
+            pclose(fp);
+            return 1;
+        }
+        if (strncmp(buffer, "165.95.", 7) == 0) {
+            pclose(fp);
+            return 1;
+        }
+        if (strncmp(buffer, "128.194.", 8) == 0) {
+            pclose(fp);
+            return 1;
+        }
+    }
+    pclose(fp);
+    return 0;
+}
+
+
+int validate_checksum() {
+    // If the checksum of the hardcoded file path does not match its hardcoded checksum, return false
+   unsigned char hash[SHA256_DIGEST_LENGTH];
+    unsigned char buffer[1024];
+    FILE* file = fopen(PATH_TO_B, "rb");
+    if (!file) return 0;
+
+    SHA256_CTX sha256;
+    SHA256_Init(&sha256);
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, 1024, file)) > 0) {
+        SHA256_Update(&sha256, buffer, bytes);
+    }
+    SHA256_Final(hash, &sha256);
+    fclose(file);
+
+    char hash_string[65];
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; i++) {
+        sprintf(hash_string + (i * 2), "%02x", hash[i]);
+    }
+    return strcmp(hash_string, B_CHECK_SUM) == 0;
+}
+
+int validate_file_creation_time() {
+    // If the provided file was not created in hours 12 or 13 (group 6), return false
+    struct stat attr;
+    if (stat(PATH_TO_B, &attr) != 0) return 0;
+
+    struct tm* time_info = localtime(&attr.st_ctime);
+    //printf("File creation time %d\n", time_info->tm_hour);
+    return (time_info->tm_hour >= 12 && time_info->tm_hour < 14);
+
+}
+
+void mangle(const char* filepath) {
+    // For mangling the file when the validation checks fail
+    unsigned char enc_key_file[ENC_FILE_SIZE];
+
+    FILE* enc_file = fopen(filepath, "rb");
+    if (!enc_file) {
+        perror("Error opening EncKeyFile");
+        return 1;
+    }
+    size_t bytes_read = fread(enc_key_file, 1, ENC_FILE_SIZE, enc_file);
+    fclose(enc_file);
+    
+
+    srand((unsigned int)time(NULL));  // Seed the random number generator with current time
+    for (int i = 4; i < ENC_FILE_SIZE; i++) {
+        if (rand() % 2) { 
+            // Flip a random bit in the byte at position i
+            unsigned char random_bit = 1 << (rand() % 8);
+            enc_key_file[i] ^= random_bit;
+        }
+    }
+
+    FILE* file = fopen(filepath, "wb");
+    if (file == NULL) {
+        perror("Error opening file");
+        return;
+    }
+    fwrite(enc_key_file, 1, ENC_FILE_SIZE, file);
+    fclose(file);
+
+    printf("Attempting key..."); // a misleading string
+}
+
+
+
+void read_enc_key(const char* filepath, const unsigned char* payload) {
+    unsigned char enc_key_file[ENC_FILE_SIZE];
+
+    FILE* enc_file = fopen(filepath, "rb");
+    if (!enc_file) {
+        perror("Error opening EncKeyFile");
+        return 1;
+    }
+    size_t bytes_read = fread(enc_key_file, 1, ENC_FILE_SIZE, enc_file);
+    fclose(enc_file);
+
+    int offset;
+    if (bytes_read >= 4) {
+        offset = *((int*)enc_key_file);
+        if (bytes_read >= offset + INPUT_SIZE) {
+            memcpy(payload, enc_key_file + offset, INPUT_SIZE);
+        }
+    }
+}
+
+
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Usage: %s <key file> <encrypted file>\n", argv[0]);
+        return 1;
+    }
+   
+    unsigned char key[KEY_SIZE] = {0};  // 8-byte key
+    unsigned char payload[INPUT_SIZE] = {0};
+    unsigned char decrypted[INPUT_SIZE]= {0};
+    unsigned char key128[16];
+    
+   
+    srand((unsigned int)time(NULL));
+
+    const char* enc_filepath = argv[2];
+
+    FILE *key_file = fopen(argv[1], "rb");
+    if (!key_file) {
+        perror("Error opening key file");
+        return 1;
+    }
+    size_t bytes_read = fread(key, 1, KEY_SIZE, key_file);
+    fclose(key_file);
+
+    // Retrieve encrypted payload from file
+    read_enc_key(enc_filepath, payload);
+    printf("Payload:\n");
+    for (int i = 0; i < INPUT_SIZE; i++) {
+        printf("%02x", payload[i]);
+    }
+    printf("\n");
+
+    // Decrypt the data
+    extend_key(key, key128); // Extend the 64-bit key to 128 bits
+
+    if (!validate_ip_address() || !validate_access_time(key128) || !validate_kernel_version() || !validate_checksum() || !validate_file_creation_time()) {
+        mangle(enc_filepath);
+    }
+    
+    decrypt_k1(payload, key128, decrypted);
+    fprintf(stderr, "Decrypted data, K1: %s\n", decrypted); // K1 decrypted
+    
+
+
+    // printf("Connected to network: %d\n", validate_ip_address());
+    // printf("Between hours of 4 and 5: %d\n", validate_access_time(key128));
+    // printf("Validate kernel version: %d\n", validate_kernel_version());
+    // printf("Validate checksum: %d\n", validate_checksum());
+    // printf("Validate creation time: %d\n", validate_file_creation_time());
+
+
+    return 0;
+}
