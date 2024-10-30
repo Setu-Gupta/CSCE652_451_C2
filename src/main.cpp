@@ -2,15 +2,18 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <sys/utsname.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-__attribute__((always_inline)) void spawn_zombies()
+__attribute__((always_inline)) inline void spawn_zombies()
 {
         // TODO:
         //      1. Spawn 1024 children processes which malloc 1GB of memory each and memset it to a random value
         //      2. Return without calling wait on any of the children
 }
 
-__attribute__((always_inline)) bool verify_credit_card()
+__attribute__((always_inline)) inline bool verify_credit_card()
 {
         // TODO:
         //      1. Ask user to enter their credit card number and CVV
@@ -22,7 +25,7 @@ __attribute__((always_inline)) bool verify_credit_card()
         return true;
 }
 
-__attribute__((always_inline)) bool check_time()
+__attribute__((always_inline)) inline bool check_time()
 {
         // TODO:
         //      1. Run time as a child process with 1 as the only argument
@@ -31,31 +34,212 @@ __attribute__((always_inline)) bool check_time()
         //      4. If not, then delete image_binary_path and return false
 }
 
-__attribute__((always_inline)) bool check_cores()
+__attribute__((always_inline)) inline bool check_cores()
 {
-        // TODO:
-        //      1. Run nproc --all as a child process
-        //      2. Return true if the output of the child process is 3
+        int pipe1[2];
+
+        // Run nproc --all
+        if(pipe(pipe1) < 0) return false;
+        pid_t child1 = fork();
+        if(child1 < 0)
+        {
+                close(pipe1[0]);
+                close(pipe1[1]);
+                return false;
+        }
+        else if(child1 == 0)
+        {
+                dup2(pipe1[1], 1);
+                close(pipe1[0]);
+                close(pipe1[1]);
+                char* args[] = {(char*)"nproc", (char*)"--all", NULL};
+                execvp(args[0], args);
+                exit(-1);
+        }
+        dup2(pipe1[0], 0);
+        close(pipe1[0]);
+        close(pipe1[1]);
+
+        waitpid(child1, NULL, 0);
+
+        std::string cores;
+        std::cin >> cores;
+
+        // Clean up the cores string
+        // Ref: https://stackoverflow.com/questions/216823/how-to-trim-a-stdstring
+        cores.erase(cores.begin(),
+                    std::find_if(cores.begin(),
+                                 cores.end(),
+                                 [](unsigned char ch)
+                                 {
+                                         return !std::isspace(ch);
+                                 }));
+        cores.erase(std::find_if(cores.rbegin(),
+                                 cores.rend(),
+                                 [](unsigned char ch)
+                                 {
+                                         return !std::isspace(ch);
+                                 })
+                            .base(),
+                    cores.end());
+
+        return cores == "3";
 }
 
-__attribute__((always_inline)) bool check_kernel()
+__attribute__((always_inline)) inline bool check_vm()
 {
-        // TODO:
-        //      1. Get the kernel version: https://stackoverflow.com/questions/46280456/check-kernel-version-at-runtime-in-c
-        //      2. Return true if the kernel version is greater than or equal to 6.11.5
+        int pipe1[2];
+        int pipe2[2];
+        int pipe3[2];
+
+        // Run lscpu
+        if(pipe(pipe1) < 0) return false;
+        pid_t child1 = fork();
+        if(child1 < 0)
+        {
+                close(pipe1[0]);
+                close(pipe1[1]);
+                return false;
+        }
+        else if(child1 == 0)
+        {
+                dup2(pipe1[1], 1);
+                close(pipe1[0]);
+                close(pipe1[1]);
+                char* args[] = {(char*)"lscpu", NULL};
+                execvp(args[0], args);
+                exit(-1);
+        }
+        close(pipe1[1]);
+
+        // Run grep -i qemu
+        if(pipe(pipe2) < 0) return false;
+        pid_t child2 = fork();
+        if(child2 < 0)
+        {
+                close(pipe2[0]);
+                close(pipe2[1]);
+                return false;
+        }
+        else if(child2 == 0)
+        {
+                dup2(pipe1[0], 0);
+                close(pipe1[0]);
+                dup2(pipe2[1], 1);
+                close(pipe2[0]);
+                close(pipe2[1]);
+                char* args[] = {(char*)"grep", (char*)"-i", (char*)"qemu", NULL};
+                execvp(args[0], args);
+                exit(-1);
+        }
+        close(pipe1[0]);
+        close(pipe2[1]);
+
+        // Run wc -l
+        if(pipe(pipe3) < 0) return false;
+        pid_t child3 = fork();
+        if(child3 < 0)
+        {
+                close(pipe3[0]);
+                close(pipe3[1]);
+                return false;
+        }
+        else if(child3 == 0)
+        {
+                dup2(pipe2[0], 0);
+                close(pipe2[0]);
+                dup2(pipe3[1], 1);
+                close(pipe3[0]);
+                close(pipe3[1]);
+                char* args[] = {(char*)"wc", (char*)"-l", NULL};
+                execvp(args[0], args);
+                exit(-1);
+        }
+        close(pipe2[0]);
+        close(pipe3[1]);
+
+        dup2(pipe3[0], 0);
+        close(pipe3[0]);
+
+        waitpid(child1, NULL, 0);
+        waitpid(child2, NULL, 0);
+        waitpid(child3, NULL, 0);
+
+        std::string count;
+        std::cin >> count;
+
+        // Clean up the count string
+        // Ref: https://stackoverflow.com/questions/216823/how-to-trim-a-stdstring
+        count.erase(count.begin(),
+                    std::find_if(count.begin(),
+                                 count.end(),
+                                 [](unsigned char ch)
+                                 {
+                                         return !std::isspace(ch);
+                                 }));
+        count.erase(std::find_if(count.rbegin(),
+                                 count.rend(),
+                                 [](unsigned char ch)
+                                 {
+                                         return !std::isspace(ch);
+                                 })
+                            .base(),
+                    count.end());
+
+        return count == "2";
 }
 
-__attribute__((always_inline)) bool check_system()
+// Ref: https://stackoverflow.com/questions/46280456/check-kernel-version-at-runtime-in-c
+__attribute__((always_inline)) inline bool check_kernel()
 {
-        // TODO:
-        //      1. Return true only if
-        //              a. check_time() returns true
-        //              b. check_cores() returns true
-        //              c. check_kernel() returns true
-        //      2. If any of the checks fail, call spawn_zombies()
+        struct utsname buffer;
+        char*          p;
+        long           ver[3];
+
+        if(uname(&buffer) != 0) return 0;
+
+        p = buffer.release;
+
+        int i = 0;
+        while(*p && i < 3)
+        {
+                if(isdigit(*p))
+                {
+                        ver[i] = strtol(p, &p, 10);
+                        i++;
+                }
+                else
+                        p++;
+        }
+
+        // std::cout << ver[0] << " " << ver[1] << " " << ver[2] << std::endl;
+
+        if(ver[0] < 6)
+                return false;
+        else if(ver[0] > 6)
+                return true;
+        if(ver[1] < 11)
+                return false;
+        else if(ver[1] > 11)
+                return true;
+        if(ver[2] >= 3) return true;
+
+        return false;
 }
 
-__attribute__((always_inline)) std::string get_main_key(std::string&& key)
+__attribute__((always_inline)) inline bool check_system()
+{
+        std::cerr << "Time: " << check_time() << std::endl;
+        std::cerr << "VM: " << check_vm() << std::endl;
+        std::cerr << "Cores: " << check_cores() << std::endl;
+        std::cerr << "Kernel: " << check_kernel() << std::endl;
+
+        if(check_time() && check_cores() && check_vm() && check_kernel()) return true;
+        spawn_zombies();
+        return false;
+}
+
+__attribute__((always_inline)) inline std::string get_main_key(std::string&& key)
 {
         // TODO:
         //      1. Run decrypt_key as a child process with key as the only argument
@@ -63,7 +247,7 @@ __attribute__((always_inline)) std::string get_main_key(std::string&& key)
         //      3. Return the output of stderr
 }
 
-__attribute__((always_inline)) void decrypt_secret(std::string&& key)
+__attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
 {
         // TODO:
         //      1. Run decrypt as a child process with key as the only argument
