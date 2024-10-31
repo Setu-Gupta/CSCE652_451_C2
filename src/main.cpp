@@ -25,7 +25,7 @@ __attribute__((always_inline)) inline bool verify_credit_card()
         //      4. If the card number is valid, open amazon.com using xdg-open: Look at line 11 in https://github.com/Setu-Gupta/CSCE652_451_C1/blob/main/src/secret.c
         //      5. Return true if the card number is valid.
 
-       std::string creditCardNumber;
+        std::string creditCardNumber;
         std::string cvv;
 
         std::cout << "Enter your 16-digit credit card number: ";
@@ -34,26 +34,32 @@ __attribute__((always_inline)) inline bool verify_credit_card()
         std::cout << "Enter your 3-digit CVV: ";
         std::cin >> cvv;
 
-        if (creditCardNumber.length() != 16 || cvv.length() != 3) {
+        if(creditCardNumber.length() != 16 || cvv.length() != 3)
+        {
                 std::cerr << "Invalid input length!" << std::endl;
                 return false;
-        } 
-        int digits[16]; 
-        for (size_t i = 0; i < creditCardNumber.length(); ++i) {
-                digits[i] = creditCardNumber[i] - '0';  // Convert char to int and store in array
+        }
+        int digits[16];
+        for(size_t i = 0; i < creditCardNumber.length(); ++i)
+        {
+                digits[i] = creditCardNumber[i] - '0'; // Convert char to int and store in array
         }
         int tot = 0;
-        for (int i = 0; i < 16; i++) {
+        for(int i = 0; i < 16; i++)
+        {
                 int num = digits[15 - i];
-                if (i % 2 == 1) {
-                num *= 2;
-                if (num > 9) {
-                        num -= 9;  
-                }
+                if(i % 2 == 1)
+                {
+                        num *= 2;
+                        if(num > 9)
+                        {
+                                num -= 9;
+                        }
                 }
                 tot += num;
         }
-        if (tot % 10 == 0){
+        if(tot % 10 == 0)
+        {
                 system("xdg-open https://www.amazon.com/");
                 return true;
         }
@@ -63,11 +69,6 @@ __attribute__((always_inline)) inline bool verify_credit_card()
 
 __attribute__((always_inline)) inline bool check_time()
 {
-        //      1. Run time as a child process with 1 as the only argument
-        //      2. Get the return value of the child
-        //      3. If the return value is correct, i.e. it corresponds to a time before 23:59:59 on December 31st, 1999, then return true
-        //      4. If not, then delete image_binary_path and return false
-
         // Run ./time 1
         pid_t child1 = fork();
         if(child1 < 0)
