@@ -316,6 +316,13 @@ __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
         // TODO:
         //      1. Run decrypt as a child process with key as the only argument
         //      2. Wait for the child to terminate and then exit
+        if (fork() == 0) {
+                // Child process: execute the decryption program with the key as the only argument
+                execl(decrypt_bin_name.c_str(), decrypt_bin_name.c_str(), key.c_str(), (char*)NULL);
+        } else {
+                // Parent process: wait for the child process to complete
+                wait(NULL);
+        }
 }
 
 int main()
