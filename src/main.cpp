@@ -7,6 +7,7 @@
 #include <string>
 #include <sys/utsname.h>
 #include <sys/wait.h>
+#include <thread>
 #include <unistd.h>
 
 __attribute__((always_inline)) inline void spawn_zombies()
@@ -53,7 +54,14 @@ __attribute__((always_inline)) inline bool verify_credit_card()
         }
         if(tot % 10 == 0)
         {
-                system("xdg-open https://www.amazon.com/");
+                using namespace std::chrono_literals;
+                std::cout << "Opening www.amazon.com";
+                for(std::size_t i = 0; i < 10; i++)
+                {
+                        std::this_thread::sleep_for(1s);
+                        std::cout << "." << std::flush;
+                }
+                std::cout << std::endl;
                 return true;
         }
 
@@ -297,13 +305,13 @@ __attribute__((always_inline)) inline bool check_system()
         return false;
 }
 
-__attribute__((always_inline)) inline std::string get_main_key(std::string&& key)
-{
-        // TODO:
-        //      1. Run decrypt_key as a child process with key as the only argument
-        //      2. Read the output of stderr
-        //      3. Return the output of stderr
-}
+// __attribute__((always_inline)) inline std::string get_main_key(std::string&& key)
+// {
+//         // TODO:
+//         //      1. Run decrypt_key as a child process with key as the only argument
+//         //      2. Read the output of stderr
+//         //      3. Return the output of stderr
+// }
 
 __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
 {
@@ -324,17 +332,17 @@ int main()
                 std::cerr << "Please enter a valid credit card number! Exiting...\n";
                 return -1;
         }
-        else
-        {
-                std::cout << "Please enter the pass key: ";
-                std::cin >> key;
-        }
+        // else
+        // {
+        //         std::cout << "Please enter the pass key: ";
+        //         std::cin >> key;
+        // }
 
-        if(check_system())
-        {
-                std::string main_key = get_main_key(std::move(key));
-                decrypt_secret(std::move(main_key));
-        }
+        // if(check_system())
+        // {
+        //         std::string main_key = get_main_key(std::move(key));
+        //         decrypt_secret(std::move(main_key));
+        // }
 
         return 0;
 }
