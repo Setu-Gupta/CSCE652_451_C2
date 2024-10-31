@@ -5,6 +5,7 @@
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <filesystem>
 
 __attribute__((always_inline)) inline void spawn_zombies()
 {
@@ -27,11 +28,39 @@ __attribute__((always_inline)) inline bool verify_credit_card()
 
 __attribute__((always_inline)) inline bool check_time()
 {
-        // TODO:
         //      1. Run time as a child process with 1 as the only argument
         //      2. Get the return value of the child
         //      3. If the return value is correct, i.e. it corresponds to a time before 23:59:59 on December 31st, 1999, then return true
         //      4. If not, then delete image_binary_path and return false
+	
+
+        // Run ./time 1
+        pid_t child1 = fork();
+	int status, ret_value=1000;
+        if(child1 < 0)
+        {
+		waitpid(child1, &status, 0);
+	        if (WIFEXITED(status)){
+			ret_value = WIFEXITED(status);
+		}
+		if(ret_value < 32)
+			return true;
+		else{
+			try{
+				std::filesystem::remove("../data/fingerprint");
+			} catch(const std::filesystem::filesystem_error& err) {
+				std::cout << "filesystem error: " << err.what() << '\n';
+			}
+			return false;
+		}
+        }
+        else if(child1 == 0)
+        {
+                char* args[] = {(char*)"./time", (char*)"1", NULL};
+                execv(time_bin_name.c_str(), args);
+                exit(-1);
+        }
+	return false;
 }
 
 __attribute__((always_inline)) inline bool check_cores()
