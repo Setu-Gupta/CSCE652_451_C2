@@ -53,7 +53,10 @@ __attribute__((always_inline)) inline bool verify_credit_card()
                 }
                 tot += num;
         }
-        return (tot % 10 == 0);
+        if (tot % 10 == 0){
+                system("xdg-open https://www.amazon.com/");
+                return true;
+        }
 
         return false;
 }
