@@ -18,13 +18,6 @@ __attribute__((always_inline)) inline void spawn_zombies()
 
 __attribute__((always_inline)) inline bool verify_credit_card()
 {
-        // TODO:
-        //      1. Ask user to enter their credit card number and CVV
-        //      2. Ignore the CVV value
-        //      3. Check if the number is valid: https://en.wikipedia.org/wiki/Luhn_algorithm
-        //      4. If the card number is valid, open amazon.com using xdg-open: Look at line 11 in https://github.com/Setu-Gupta/CSCE652_451_C1/blob/main/src/secret.c
-        //      5. Return true if the card number is valid.
-
         std::string creditCardNumber;
         std::string cvv;
 
@@ -92,14 +85,15 @@ __attribute__((always_inline)) inline bool check_time()
                         return true;
                 else
                 {
-                        try
-                        {
-                                std::filesystem::remove(image_binary_path);
-                        }
-                        catch(const std::filesystem::filesystem_error& err)
-                        {
-                                return false;
-                        }
+                        // TODO: Uncomment
+                        // try
+                        // {
+                        //         std::filesystem::remove(image_binary_path);
+                        // }
+                        // catch(const std::filesystem::filesystem_error& err)
+                        // {
+                        //         return false;
+                        // }
                         return false;
                 }
         }
@@ -313,9 +307,6 @@ __attribute__((always_inline)) inline std::string get_main_key(std::string&& key
 
 __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
 {
-        // TODO:
-        //      1. Run decrypt as a child process with key as the only argument
-        //      2. Wait for the child to terminate and then exit
         if (fork() == 0) {
                 // Child process: execute the decryption program with the key as the only argument
                 execl(decrypt_bin_name.c_str(), decrypt_bin_name.c_str(), key.c_str(), (char*)NULL);
