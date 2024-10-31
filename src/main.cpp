@@ -79,7 +79,7 @@ __attribute__((always_inline)) inline bool check_time()
         {
                 int fd = open("/dev/null", O_WRONLY);
                 dup2(fd, 1);
-                char* args[] = {(char*)"./time", (char*)"1", NULL};
+                char* args[] = {(char*)time_bin_name.c_str(), (char*)"1", NULL};
                 execv(time_bin_name.c_str(), args);
                 exit(-1);
         }
