@@ -11,8 +11,8 @@
 
 CODE FIVE
 
-To compile: gcc -o decrypt_aes decrypt_aes.c -lssl -lcrypto
-To run: ./decrypt_aes key_file_path (K2) enc_file_path
+To compile: gcc -o decrypt_key decrypt_key.c -lssl -lcrypto
+To run: ./decrypt_key  ../data/key2.bin ../data/EncKeyFile
 
 Under the correct conditions, given inputs of the correct K2 and an encrypted file, will return an output of the decrypted K1
 Both the key and encrypted file must be txt files. 
@@ -240,23 +240,24 @@ int main(int argc, char* argv[]) {
     size_t bytes_read = fread(key, 1, KEY_SIZE, key_file);
     fclose(key_file);
 
-    // Retrieve encrypted payload from file
-    read_enc_key(enc_filepath, payload);
-    printf("Payload:\n");
-    for (int i = 0; i < INPUT_SIZE; i++) {
-        printf("%02x", payload[i]);
-    }
-    printf("\n");
-
-    // Decrypt the data
-    extend_key(key, key128); // Extend the 64-bit key to 128 bits
-
     if (!validate_ip_address() || !validate_access_time(key128) || !validate_kernel_version() || !validate_checksum() || !validate_file_creation_time()) {
         mangle(enc_filepath);
     }
-    
+
+    // Retrieve encrypted payload from file
+    read_enc_key(enc_filepath, payload);
+    // printf("Payload:\n");
+    // for (int i = 0; i < INPUT_SIZE; i++) {
+    //     printf("%02x", payload[i]);
+    // }
+    // printf("\n");
+
+    // Decrypt the data
+    extend_key(key, key128); // Extend the 64-bit key to 128 bits
     decrypt_k1(payload, key128, decrypted);
-    fprintf(stderr, "Decrypted data, K1: %s\n", decrypted); // K1 decrypted
+    for (int i = 0; i < INPUT_SIZE; i++) {
+        fprintf(stderr, "%02x", decrypted[i]);
+    }
     
 
 

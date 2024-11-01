@@ -6,9 +6,9 @@
 /*
 CODE FOUR
 
-To compile: gcc -o aes aes.c -lssl -lcrypto
+To compile: gcc -o encrypt_key encrypt_key.c -lssl -lcrypto
 To run: ./aes input_to_encrypt_file_name key_file_name
-        ex: ./aes K1.txt K2.txt
+        ex: ./encrypt_key ../data/key1.bin ../data/key2.bin
 
 Update extend_key so that time pulls from code three
 */
@@ -22,12 +22,7 @@ void extend_key(const unsigned char* key64, unsigned char* key128) {
     memcpy(key128, key64, KEY_SIZE);
     memset(key128 + KEY_SIZE, 0, 16 - KEY_SIZE); // Pad with zeros
 
-    // switch to call time function from code 3
-    time_t t = time(NULL);
-    struct tm* tm_info = localtime(&t);
-    int current_hour = tm_info->tm_hour;
-    unsigned char hour_group = (unsigned char) (current_hour / 2); // Dependent on two hour intervals
-    key128[15] = hour_group;
+    key128[15] = (unsigned char) 2;
 }
 
 void do_AES_encrypt(const unsigned char* input, const unsigned char* key64, unsigned char* output) {
@@ -113,7 +108,7 @@ int main(int argc, char* argv[]) {
 
     // Write to file
     create_enc_key_file(encrypted, enc_key_file);
-    write_enc_key_file("EncKeyFile", enc_key_file);
+    write_enc_key_file("../data/EncKeyFile", enc_key_file);
 
     return 0;
 }
