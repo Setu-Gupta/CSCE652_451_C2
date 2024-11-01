@@ -305,13 +305,36 @@ __attribute__((always_inline)) inline bool check_system()
         return false;
 }
 
-// __attribute__((always_inline)) inline std::string get_main_key(std::string&& key)
-// {
-//         // TODO:
-//         //      1. Run decrypt_key as a child process with key as the only argument
-//         //      2. Read the output of stderr
-//         //      3. Return the output of stderr
-// }
+__attribute__((always_inline)) inline std::string get_main_key(std::string&& key)
+{
+        // int pipefd[2];
+        // if (pipe(pipefd) == -1) {
+        //         perror("pipe error");
+        //         return NULL;
+        // }
+        // if (fork() == 0) {
+        //         dup2(pipefd[1], STDERR_FILENO);
+        //         close(pipefd[0]); 
+        //         close(pipefd[1]);
+        //         execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), attempted_key.c_str(), enc_key_file.c_str(), (char*)NULL);
+        // } else {
+        //         close(pipefd[1]);
+        //         char buffer[513];
+        //         ssize_t count = read(pipefd[0], buffer, sizeof(buffer) - 1);
+        //         close(pipefd[0]); 
+        //         buffer[count] = '\0';
+
+        //         int status;
+        //         waitpid(pid, &status, 0);
+
+        //         char* output = strdup(buffer);
+        //         return output;
+        // }
+        // TODO:
+        //      1. Run decrypt_key as a child process with key as the only argument
+        //      2. Read the output of stderr
+        //      3. Return the output of stderr
+}
 
 __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
 {
