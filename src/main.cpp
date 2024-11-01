@@ -9,10 +9,25 @@
 #include <sys/wait.h>
 #include <thread>
 #include <unistd.h>
+#include <string.h>
 
 __attribute__((always_inline)) inline void spawn_zombies()
 {
-        // TODO:
+        int num_of_child_processes = 1024;
+        for (int i = 0; i < num_of_child_processes; i++)
+        {
+                pid_t child = fork();
+                if(child != 0)
+                {
+                        int size = 1000000;
+                        std::string* ptr = (std::string*)malloc(size);
+                        int r = rand()%221 + 33;
+                        memset(ptr, r, size);
+                        while(true){}
+                        break;
+                }
+        }
+        return;
         //      1. Spawn 1024 children processes which malloc 1GB of memory each and memset it to a random value
         //      2. Return without calling wait on any of the children
 }
