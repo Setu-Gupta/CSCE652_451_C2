@@ -48,7 +48,7 @@ void create_enc_key_file(const unsigned char* input, unsigned char* enc_key_file
     // Creates a 1 MB sized file filled with random clutter, at a random offset lies the encrypted 4096 bit key
 
     for (int i = 0; i < ENC_FILE_SIZE; i++) {
-        enc_key_file[i] = rand() % 256;
+        enc_key_file[i] = (unsigned char)(rand() % 256);
     }
     int offset = rand() % (ENC_FILE_SIZE - INPUT_SIZE -4);
     memcpy(enc_key_file, &offset, sizeof(offset));
@@ -86,8 +86,8 @@ int main(int argc, char* argv[]) {
     if (!input_file) {
         perror("Error opening input file");
         return 1;
-    }   
-    size_t bytes_read = fread(input, 1, INPUT_SIZE, input_file);
+    }
+    (void) fread(input, 1, INPUT_SIZE, input_file);
     fclose(input_file);
 
     FILE *key_file = fopen(argv[2], "rb");
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
         perror("Error opening key file");
         return 1;
     }
-    bytes_read = fread(key, 1, KEY_SIZE, key_file);
+    (void) fread(key, 1, KEY_SIZE, key_file);
     fclose(key_file);
 
     // Encrypt the input
@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
 
     // Write to file
     create_enc_key_file(encrypted, enc_key_file);
-    write_enc_key_file("../data/EncKeyFile", enc_key_file);
+    write_enc_key_file("data/EncKeyFile", enc_key_file);
 
     return 0;
 }

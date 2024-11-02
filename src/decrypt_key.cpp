@@ -107,7 +107,7 @@ int validate_ip_address() {
 
     if (fgets(buffer, sizeof(buffer), fp) != NULL) {
         printf("Your public IP address is: %s\n", buffer);
-        
+
         if (strncmp(buffer, "165.91.", 7) == 0) {
             pclose(fp);
             return 1;
@@ -161,17 +161,19 @@ int validate_file_creation_time() {
 }
 
 void mangle(const char* filepath) {
+#ifdef NO_KEY_MANGLE
+    printf("Mangling Key!!\n");
+#else
     // For mangling the file when the validation checks fail
     unsigned char enc_key_file[ENC_FILE_SIZE];
 
     FILE* enc_file = fopen(filepath, "rb");
     if (!enc_file) {
         perror("Error opening EncKeyFile");
-        return 1;
+        return;
     }
-    size_t bytes_read = fread(enc_key_file, 1, ENC_FILE_SIZE, enc_file);
+    (void) fread(enc_key_file, 1, ENC_FILE_SIZE, enc_file);
     fclose(enc_file);
-    
 
     srand((unsigned int)time(NULL));  // Seed the random number generator with current time
     for (int i = 4; i < ENC_FILE_SIZE; i++) {
@@ -190,18 +192,19 @@ void mangle(const char* filepath) {
     fwrite(enc_key_file, 1, ENC_FILE_SIZE, file);
     fclose(file);
 
-    printf("Attempting key..."); // a misleading string
+    printf("Attempting key...\n"); // a misleading string
+#endif
 }
 
 
 
-void read_enc_key(const char* filepath, const unsigned char* payload) {
+void read_enc_key(const char* filepath, unsigned char* payload) {
     unsigned char enc_key_file[ENC_FILE_SIZE];
 
     FILE* enc_file = fopen(filepath, "rb");
     if (!enc_file) {
         perror("Error opening EncKeyFile");
-        return 1;
+        return;
     }
     size_t bytes_read = fread(enc_key_file, 1, ENC_FILE_SIZE, enc_file);
     fclose(enc_file);
@@ -209,7 +212,7 @@ void read_enc_key(const char* filepath, const unsigned char* payload) {
     int offset;
     if (bytes_read >= 4) {
         offset = *((int*)enc_key_file);
-        if (bytes_read >= offset + INPUT_SIZE) {
+        if (bytes_read >= (size_t)offset + INPUT_SIZE) {
             memcpy(payload, enc_key_file + offset, INPUT_SIZE);
         }
     }
@@ -221,13 +224,12 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Usage: %s <key file> <encrypted file>\n", argv[0]);
         return 1;
     }
-   
+
     unsigned char key[KEY_SIZE] = {0};  // 8-byte key
     unsigned char payload[INPUT_SIZE] = {0};
     unsigned char decrypted[INPUT_SIZE]= {0};
     unsigned char key128[16];
-    
-   
+
     srand((unsigned int)time(NULL));
 
     const char* enc_filepath = argv[2];
@@ -258,8 +260,6 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < INPUT_SIZE; i++) {
         fprintf(stderr, "%02x", decrypted[i]);
     }
-    
-
 
     // printf("Connected to network: %d\n", validate_ip_address());
     // printf("Between hours of 4 and 5: %d\n", validate_access_time(key128));
