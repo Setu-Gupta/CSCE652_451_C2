@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+inline __attribute__((always_inline))
 void encrypt_file(const uint8_t *key, const char *input_file, const char *output_file) {
     uint8_t buffer[512];
     size_t bytes_read;
@@ -25,6 +26,7 @@ void encrypt_file(const uint8_t *key, const char *input_file, const char *output
     fclose(out);
 }
 
+inline __attribute__((always_inline))
 uint8_t* read_key(const char *key_file, size_t *key_length) {
     FILE *key_fp = fopen(key_file, "rb");
     if (!key_fp) {
