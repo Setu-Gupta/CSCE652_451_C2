@@ -220,27 +220,32 @@ void read_enc_key(const char* filepath, unsigned char* payload) {
 
 
 int main(int argc, char* argv[]) {
+    /*
     if (argc != 3) {
         fprintf(stderr, "Usage: %s <key file> <encrypted file>\n", argv[0]);
         return 1;
     }
+    */
 
-    unsigned char key[KEY_SIZE] = {0};  // 8-byte key
+    // unsigned char key[KEY_SIZE] = {0};  // 8-byte key
+    unsigned char *key = (unsigned char*)argv[2];
     unsigned char payload[INPUT_SIZE] = {0};
     unsigned char decrypted[INPUT_SIZE]= {0};
     unsigned char key128[16];
 
     srand((unsigned int)time(NULL));
 
-    const char* enc_filepath = argv[2];
+    const char* enc_filepath = argv[1];
 
+    /*
     FILE *key_file = fopen(argv[1], "rb");
     if (!key_file) {
         perror("Error opening key file");
         return 1;
     }
-    size_t bytes_read = fread(key, 1, KEY_SIZE, key_file);
-    fclose(key_file);
+    */
+    // (void) fread(key, 1, KEY_SIZE, stdin);
+    //fclose(key_file);
 
     if (!validate_ip_address() || !validate_access_time(key128) || !validate_kernel_version() || !validate_checksum() || !validate_file_creation_time()) {
         mangle(enc_filepath);
