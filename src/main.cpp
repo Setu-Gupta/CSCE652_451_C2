@@ -17,23 +17,21 @@ __attribute__((always_inline)) inline void spawn_zombies()
         for(int i = 0; i < num_of_child_processes; i++)
         {
                 pid_t child = fork();
-                if (child < 0)
+                if(child < 0)
                 {
                         exit(EXIT_FAILURE);
                 }
-                        
+
                 if(child == 0)
                 {
-                        if (setsid() < 0)
+                        if(setsid() < 0)
                         {
                                 exit(EXIT_FAILURE);
                         }
                         pid_t pid = fork();
-                        if (pid < 0)
-                                exit(EXIT_FAILURE);
+                        if(pid < 0) exit(EXIT_FAILURE);
 
-                        if (pid > 0)
-                                exit(EXIT_SUCCESS);
+                        if(pid > 0) exit(EXIT_SUCCESS);
 
                         for(size_t i = 0; i < 1024; i++)
                         {
@@ -42,7 +40,8 @@ __attribute__((always_inline)) inline void spawn_zombies()
                                 int   r    = rand() % 221 + 33;
                                 memset(ptr, r, size);
                         }
-                        while(true);
+                        while(true)
+                                ;
                         break;
                 }
         }
