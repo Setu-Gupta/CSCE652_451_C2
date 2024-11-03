@@ -46,9 +46,9 @@ inline __attribute((always_inline)) void extend_key(const unsigned char* key64, 
         unsigned char hour_group   = (unsigned char)(current_hour / 2); // Dependent on two hour intervals
 #ifdef DEBUG_FORCE_TIME
         (void)hour_group;
-        key128[15]                 = 2;
+        key128[15] = 2;
 #else
-        key128[15]                 = hour_group;
+        key128[15] = hour_group;
 #endif
 }
 

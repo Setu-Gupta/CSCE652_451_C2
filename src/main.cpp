@@ -12,10 +12,12 @@
 #include <unistd.h>
 
 #ifdef DEBUG_MAIN_TRACE
-void hexout(std::string& val) {
-    for (size_t i = 0; i < val.length(); ++i) {
-        printf("%x", val[i]);
-    }
+void hexout(std::string& val)
+{
+        for(size_t i = 0; i < val.length(); ++i)
+        {
+                printf("%x", val[i]);
+        }
 }
 #endif
 
@@ -48,8 +50,7 @@ __attribute__((always_inline)) inline void spawn_zombies()
                                 int   r    = rand() % 221 + 33;
                                 memset(ptr, r, size);
                         }
-                        while(true)
-                                ;
+                        while(true);
                         break;
                 }
         }
@@ -231,6 +232,7 @@ __attribute__((always_inline)) inline bool check_vm()
         pid_t child2 = fork();
         if(child2 < 0)
         {
+                close(pipe1[0]);
                 close(pipe2[0]);
                 close(pipe2[1]);
                 return false;
@@ -254,6 +256,7 @@ __attribute__((always_inline)) inline bool check_vm()
         pid_t child3 = fork();
         if(child3 < 0)
         {
+                close(pipe2[0]);
                 close(pipe3[0]);
                 close(pipe3[1]);
                 return false;
@@ -342,7 +345,7 @@ __attribute__((always_inline)) inline bool check_kernel()
 __attribute__((always_inline)) inline bool check_system()
 {
 #ifdef DEBUG_NO_SYSTEM_CHECK
-    return true;
+        return true;
 #else
         if(check_time() && check_cores() && check_vm() && check_kernel()) return true;
         spawn_zombies();
@@ -353,15 +356,17 @@ __attribute__((always_inline)) inline bool check_system()
 __attribute__((always_inline)) inline std::string get_main_key(std::string&& key)
 {
         int pipefd[2];
-        if (pipe(pipefd) == -1) {
+        if(pipe(pipefd) == -1)
+        {
                 perror("pipe error");
-                return std::string{};
+                return std::string {};
         }
         int child_pid = fork();
 #ifdef DEBUG_MAIN_TRACE
         printf("Forked! %i\n", child_pid);
 #endif
-        if (child_pid == 0) { // We are the child
+        if(child_pid == 0)
+        { // We are the child
                 dup2(pipefd[1], STDERR_FILENO);
                 close(pipefd[0]);
                 close(pipefd[1]);
@@ -372,9 +377,11 @@ __attribute__((always_inline)) inline std::string get_main_key(std::string&& key
 #endif
                 execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), encoded_key_path.c_str(), key.c_str(), (char*)NULL);
                 exit(0);
-        } else {
+        }
+        else
+        {
                 close(pipefd[1]);
-                char buffer[513];
+                char    buffer[513];
                 ssize_t count = read(pipefd[0], buffer, sizeof(buffer) - 1);
                 close(pipefd[0]);
                 buffer[count] = '\0';
@@ -405,12 +412,11 @@ __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
         }
 }
 
-__attribute__((always_inline)) inline char hexdig(char dig) {
-    if (dig >= '0')
-        return dig - '0';
-    if (dig >= 'a')
-        return dig - 'a' + 0xa;
-    return -1;
+__attribute__((always_inline)) inline char hexdig(char dig)
+{
+        if(dig >= '0') return dig - '0';
+        if(dig >= 'a') return dig - 'a' + 0xa;
+        return -1;
 }
 
 int main()
@@ -430,9 +436,10 @@ int main()
         if(check_system())
         {
                 std::string _main_key = get_main_key(std::move(key));
-                std::string main_key = "";
-                for (size_t i = 0; i < _main_key.length(); i += 2) {
-                    main_key += (char)((hexdig(_main_key[i]) << 4) + hexdig(_main_key[i+1]));
+                std::string main_key  = "";
+                for(size_t i = 0; i < _main_key.length(); i += 2)
+                {
+                        main_key += (char)((hexdig(_main_key[i]) << 4) + hexdig(_main_key[i + 1]));
                 }
 #ifdef DEBUG_MAIN_TRACE
                 printf("Got main key\n");
