@@ -30,8 +30,8 @@ Note:
 #define KEY_SIZE 8
 #define ENC_FILE_SIZE (1024 * 1024)
 
-#define PATH_TO_B "B"
-#define B_CHECK_SUM "49e2fa2be92af3d9fff8dbf54b81bd20b1fd518b0fad63f890e3ee97cb9f3a25"
+#define PATH_TO_B "libssl.a"
+#define B_CHECK_SUM "a3dd7eed6935257420ca9dbfbd259d7685a59241cfc2c7983a81cee5da70f53d"
 // TODO CHANGE THE HARDCODED VALUES FOR B AND B'S CHECKSUM AFTER MERGED!!!
 
 void extend_key(const unsigned char* key64, unsigned char* key128) {
@@ -79,7 +79,10 @@ int validate_kernel_version() {
     if (uname(&buffer) == 0) {
         char version[128];
         memcpy(version, buffer.release, sizeof(buffer.release) % 128);
-        if (strncmp(version, "6.11.5", 6) == 0) {
+#ifdef DEBUG_VALIDATE_FUNCS
+        printf("Kernel Version: %.10s\n", version);
+#endif
+        if (strncmp(version, "6.11.3", 6) >= 0) {
             return 1;
         }
         else {
@@ -155,7 +158,9 @@ int validate_file_creation_time() {
     if (stat(PATH_TO_B, &attr) != 0) return 0;
 
     struct tm* time_info = localtime(&attr.st_ctime);
-    //printf("File creation time %d\n", time_info->tm_hour);
+#ifdef DEBUG_VALIDATE_FUNCS
+    printf("File creation time %d\n", time_info->tm_hour);
+#endif
     return (time_info->tm_hour >= 12 && time_info->tm_hour < 14);
 
 }
@@ -247,6 +252,8 @@ int main(int argc, char* argv[]) {
     // (void) fread(key, 1, KEY_SIZE, stdin);
     //fclose(key_file);
 
+    extend_key(key, key128); // Extend the 64-bit key to 128 bits
+
     if (!validate_ip_address() || !validate_access_time(key128) || !validate_kernel_version() || !validate_checksum() || !validate_file_creation_time()) {
         mangle(enc_filepath);
     }
@@ -260,17 +267,18 @@ int main(int argc, char* argv[]) {
     // printf("\n");
 
     // Decrypt the data
-    extend_key(key, key128); // Extend the 64-bit key to 128 bits
     decrypt_k1(payload, key128, decrypted);
     for (int i = 0; i < INPUT_SIZE; i++) {
         fprintf(stderr, "%02x", decrypted[i]);
     }
 
-    // printf("Connected to network: %d\n", validate_ip_address());
-    // printf("Between hours of 4 and 5: %d\n", validate_access_time(key128));
-    // printf("Validate kernel version: %d\n", validate_kernel_version());
-    // printf("Validate checksum: %d\n", validate_checksum());
-    // printf("Validate creation time: %d\n", validate_file_creation_time());
+#ifdef DEBUG_VALIDATE_FUNCS
+    printf("Connected to network: %d\n", validate_ip_address());
+    printf("Between hours of 4 and 5: %d\n", validate_access_time(key128));
+    printf("Validate kernel version: %d\n", validate_kernel_version());
+    printf("Validate checksum: %d\n", validate_checksum());
+    printf("Validate creation time: %d\n", validate_file_creation_time());
+#endif
 
 
     return 0;
