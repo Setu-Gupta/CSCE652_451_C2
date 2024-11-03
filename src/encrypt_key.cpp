@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 
         // Write to file
         create_enc_key_file(encrypted, enc_key_file);
-        write_enc_key_file(encoded_key_path, enc_key_file);
+        write_enc_key_file(encoded_key_path.c_str(), enc_key_file);
 
         return 0;
 }
