@@ -403,7 +403,8 @@ __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
         if(fork() == 0)
         {
                 // Child process: execute the decryption program with the key as the only argument
-                execl(decrypt_bin_name.c_str(), decrypt_bin_name.c_str(), key.c_str(), (char*)NULL);
+                char* args[] = { (char*)decrypt_bin_name.c_str(), (char*)key.c_str(), (char*)encoded_secret_path.c_str(), (char*)"./secret", (char*)NULL };
+                execvp(decrypt_bin_name.c_str(), args);
         }
         else
         {
