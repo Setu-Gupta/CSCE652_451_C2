@@ -3,6 +3,7 @@
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include <openssl/evp.h>
 #include <stdlib.h>
 #include <sys/utsname.h>
 #include <sys/stat.h>
@@ -48,17 +49,12 @@ void extend_key(const unsigned char* key64, unsigned char* key128) {
 }
 
 
-void do_AES_decrypt(const unsigned char* input, const unsigned char* key128, unsigned char* output) {
-    AES_KEY dec_key;
-    AES_set_decrypt_key(key128, 128, &dec_key); // Use 128 bits
-    AES_decrypt(input, output, &dec_key);
-}
-
-
 void decrypt_k1(const unsigned char* input, const unsigned char* key, unsigned char* output) {
-    for (int i = 0; i < INPUT_SIZE; i += BLOCK_SIZE) {
-        do_AES_decrypt(input + i, key, output + i);
-    }
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit(ctx, EVP_aes_128_ecb(), key, NULL);
+    int out_len = 0;
+    EVP_DecryptUpdate(ctx, output, &out_len, input, INPUT_SIZE);
+    EVP_CIPHER_CTX_free(ctx);
 }
 
 
@@ -225,12 +221,10 @@ void read_enc_key(const char* filepath, unsigned char* payload) {
 
 
 int main(int argc, char* argv[]) {
-    /*
     if (argc != 3) {
-        fprintf(stderr, "Usage: %s <key file> <encrypted file>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <encrypted file> <key>\n", argv[0]);
         return 1;
     }
-    */
 
     // unsigned char key[KEY_SIZE] = {0};  // 8-byte key
     unsigned char *key = (unsigned char*)argv[2];

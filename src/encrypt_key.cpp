@@ -25,24 +25,16 @@ void extend_key(const unsigned char* key64, unsigned char* key128) {
     key128[15] = (unsigned char) 2;
 }
 
-void do_AES_encrypt(const unsigned char* input, const unsigned char* key64, unsigned char* output) {
-    unsigned char key128[16];
-    extend_key(key64, key128); // Extend the 64-bit key to 128 bits
-
-    AES_KEY enc_key;
-    AES_set_encrypt_key(key128, 128, &enc_key); // Use 128 bits
-    AES_encrypt(input, output, &enc_key);
-}
-
-
-
 void encrypt_k1(const unsigned char* input, const unsigned char* key, unsigned char* output) {
-    for (int i = 0; i < INPUT_SIZE; i += BLOCK_SIZE) {
-        do_AES_encrypt(input + i, key, output + i);
-    }
+    unsigned char key128[16];
+    extend_key(key, key128);
+
+    EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit(ctx, EVP_aes_128_ecb(), key128, NULL);
+    int out_len = INPUT_SIZE;
+    EVP_EncryptUpdate(ctx, output, &out_len, input, INPUT_SIZE);
+    EVP_CIPHER_CTX_free(ctx);
 }
-
-
 
 void create_enc_key_file(const unsigned char* input, unsigned char* enc_key_file) {
     // Creates a 1 MB sized file filled with random clutter, at a random offset lies the encrypted 4096 bit key
@@ -65,7 +57,6 @@ void write_enc_key_file(const char* filename, const unsigned char* enc_key_file)
     fclose(file);
     printf("EncKeyFile written to %s\n", filename);
 }
-
 
 
 int main(int argc, char* argv[]) {
