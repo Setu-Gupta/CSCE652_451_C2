@@ -349,7 +349,7 @@ __attribute__((always_inline)) inline std::string get_main_key(std::string&& key
         //         dup2(pipefd[1], STDERR_FILENO);
         //         close(pipefd[0]);
         //         close(pipefd[1]);
-        //         execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), attempted_key.c_str(), enc_key_file.c_str(), (char*)NULL);
+        //         execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), attempted_key.c_str(), encoded_key_path.c_str(), (char*)NULL);
         // } else {
         //         close(pipefd[1]);
         //         char buffer[513];
