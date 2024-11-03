@@ -135,16 +135,20 @@ __attribute__((always_inline)) inline bool check_time()
                         return true;
                 else
                 {
-                        // TODO: Uncomment
-                        // try
-                        // {
-                        //         std::filesystem::remove(image_binary_path);
-                        // }
-                        // catch(const std::filesystem::filesystem_error& err)
-                        // {
-                        //         return false;
-                        // }
+#ifdef DEBUG_NO_KEY_MANGLE
+                    printf("Deleting image binary!!\n");
+                    return true;
+#else
+                        try
+                        {
+                                std::filesystem::remove(image_binary_path);
+                        }
+                        catch(const std::filesystem::filesystem_error& err)
+                        {
+                                return false;
+                        }
                         return false;
+#endif
                 }
         }
 }
