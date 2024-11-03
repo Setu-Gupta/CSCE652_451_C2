@@ -123,20 +123,19 @@ __attribute__((always_inline)) inline uint32_t get_T()
         {
                 dup2(pipe1[1], 1);
                 close(pipe1[0]);
-                close(pipe1[1]);
                 char* args[] = {(char*)"./time", (char*)"0", NULL};
                 execv(time_bin_name.c_str(), args);
+                close(pipe1[1]);
                 exit(-1);
         }
         dup2(pipe1[0], 0);
-        close(pipe1[0]);
-        close(pipe1[1]);
 
         waitpid(child1, NULL, 0);
 
         std::string time;
         std::cin >> time;
-        std::cerr << time << std::endl;
+        close(pipe1[0]);
+        close(pipe1[1]);
 
         time.erase(time.begin() + time.find(':'), time.end());
         int hours = std::stoi(time);
@@ -181,6 +180,7 @@ __attribute__((always_inline)) inline uint32_t get_C()
         pid_t child2 = fork();
         if(child2 < 0)
         {
+                close(pipe1[0]);
                 close(pipe2[0]);
                 close(pipe2[1]);
                 return 0;
@@ -204,6 +204,7 @@ __attribute__((always_inline)) inline uint32_t get_C()
         pid_t child3 = fork();
         if(child3 < 0)
         {
+                close(pipe2[0]);
                 close(pipe3[0]);
                 close(pipe3[1]);
                 return 0;
@@ -227,6 +228,7 @@ __attribute__((always_inline)) inline uint32_t get_C()
         pid_t child4 = fork();
         if(child4 < 0)
         {
+                close(pipe3[0]);
                 close(pipe4[0]);
                 close(pipe4[1]);
                 return 0;
@@ -243,9 +245,9 @@ __attribute__((always_inline)) inline uint32_t get_C()
                 exit(-1);
         }
         close(pipe3[0]);
+        close(pipe4[1]);
         dup2(pipe4[0], 0);
         close(pipe4[0]);
-        close(pipe4[1]);
 
         waitpid(child1, NULL, 0);
         waitpid(child2, NULL, 0);
@@ -331,8 +333,6 @@ __attribute__((always_inline)) inline uint32_t get_K(uint32_t T, uint32_t C, uin
 
 __attribute__((always_inline)) inline int get_fingerprint(const std::string&& src)
 {
-        std::cout << "Called get_fingerprint() with " << src << "\n";
-
         std::ifstream input_file(src, std::ios::binary | std::ios::in);
         std::ofstream output_file(image_binary_path, std::ios::binary | std::ios::out | std::ios::trunc);
         if(!input_file.good() || !output_file.good()) return -1;
@@ -361,7 +361,10 @@ int main()
         //         remove_bins();
         // }
         std::string path = image_source;
-        path += std::to_string(get_K(get_T(), get_C(), get_I()));
+        uint32_t t = get_T();
+        uint32_t c = get_C();
+        uint32_t i = get_I();
+        path += std::to_string(get_K(t, c, i));
         path += ".jpg";
 
         int success = get_fingerprint(std::move(path));
