@@ -52,4 +52,4 @@ zip-student:
 .PHONY: zip-ta
 zip-ta:
 	rm -f ../ta.zip
-	zip -r ../ta.zip .
+	zip -r ../ta.zip bin data src inc build sample.txt Gen_Secret.py Makefile README.md libssl.a libcrypto.a
