@@ -44,7 +44,12 @@ inline __attribute((always_inline)) void extend_key(const unsigned char* key64, 
         struct tm*    tm_info      = localtime(&t);
         int           current_hour = tm_info->tm_hour;
         unsigned char hour_group   = (unsigned char)(current_hour / 2); // Dependent on two hour intervals
+#ifdef DEBUG_FORCE_TIME
+        (void)hour_group;
+        key128[15]                 = 2;
+#else
         key128[15]                 = hour_group;
+#endif
 }
 
 inline __attribute((always_inline)) void decrypt_k1(const unsigned char* input, const unsigned char* key, unsigned char* output)
@@ -176,8 +181,9 @@ inline __attribute((always_inline)) int validate_file_creation_time()
 
 inline __attribute((always_inline)) void mangle(const char* filepath)
 {
-#ifdef NO_KEY_MANGLE
+#ifdef DEBUG_NO_KEY_MANGLE
         printf("Mangling Key!!\n");
+        (void)filepath;
 #else
         // For mangling the file when the validation checks fail
         unsigned char enc_key_file[ENC_FILE_SIZE];
@@ -289,7 +295,7 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "%02x", decrypted[i]);
         }
 
-#ifdef DEBUG_VALIDATE_FUNCS
+#ifdef DEBUG_SHOW_VALIDATE_FUNCS
         printf("Connected to network: %d\n", validate_ip_address());
         printf("Between hours of 4 and 5: %d\n", validate_access_time(key128));
         printf("Validate kernel version: %d\n", validate_kernel_version());

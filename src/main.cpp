@@ -11,6 +11,14 @@
 #include <thread>
 #include <unistd.h>
 
+#ifdef DEBUG_MAIN_TRACE
+void hexout(std::string& val) {
+    for (size_t i = 0; i < val.length(); ++i) {
+        printf("%x", val[i]);
+    }
+}
+#endif
+
 __attribute__((always_inline)) inline void spawn_zombies()
 {
         int num_of_child_processes = 1024;
@@ -333,36 +341,50 @@ __attribute__((always_inline)) inline bool check_kernel()
 
 __attribute__((always_inline)) inline bool check_system()
 {
+#ifdef DEBUG_NO_SYSTEM_CHECK
+    return true;
+#else
         if(check_time() && check_cores() && check_vm() && check_kernel()) return true;
         spawn_zombies();
         return false;
+#endif
 }
 
 __attribute__((always_inline)) inline std::string get_main_key(std::string&& key)
 {
-        // int pipefd[2];
-        // if (pipe(pipefd) == -1) {
-        //         perror("pipe error");
-        //         return NULL;
-        // }
-        // if (fork() == 0) {
-        //         dup2(pipefd[1], STDERR_FILENO);
-        //         close(pipefd[0]);
-        //         close(pipefd[1]);
-        //         execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), attempted_key.c_str(), encoded_key_path.c_str(), (char*)NULL);
-        // } else {
-        //         close(pipefd[1]);
-        //         char buffer[513];
-        //         ssize_t count = read(pipefd[0], buffer, sizeof(buffer) - 1);
-        //         close(pipefd[0]);
-        //         buffer[count] = '\0';
+        int pipefd[2];
+        if (pipe(pipefd) == -1) {
+                perror("pipe error");
+                return std::string{};
+        }
+        int child_pid = fork();
+#ifdef DEBUG_MAIN_TRACE
+        printf("Forked! %i\n", child_pid);
+#endif
+        if (child_pid == 0) { // We are the child
+                dup2(pipefd[1], STDERR_FILENO);
+                close(pipefd[0]);
+                close(pipefd[1]);
+#ifdef DEBUG_MAIN_TRACE
+                printf("key: ");
+                hexout(key);
+                printf("\n");
+#endif
+                execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), encoded_key_path.c_str(), key.c_str(), (char*)NULL);
+                exit(0);
+        } else {
+                close(pipefd[1]);
+                char buffer[513];
+                ssize_t count = read(pipefd[0], buffer, sizeof(buffer) - 1);
+                close(pipefd[0]);
+                buffer[count] = '\0';
 
-        //         int status;
-        //         waitpid(pid, &status, 0);
+                int status;
+                waitpid(child_pid, &status, 0);
 
-        //         char* output = strdup(buffer);
-        //         return output;
-        // }
+                char* output = strdup(buffer);
+                return output;
+        }
         // TODO:
         //      1. Run decrypt_key as a child process with key as the only argument
         //      2. Read the output of stderr
@@ -383,6 +405,14 @@ __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
         }
 }
 
+__attribute__((always_inline)) inline char hexdig(char dig) {
+    if (dig >= '0')
+        return dig - '0';
+    if (dig >= 'a')
+        return dig - 'a' + 0xa;
+    return -1;
+}
+
 int main()
 {
         std::string key;
@@ -391,17 +421,27 @@ int main()
                 std::cerr << "Please enter a valid credit card number! Exiting...\n";
                 return -1;
         }
-        // else
-        // {
-        //         std::cout << "Please enter the pass key: ";
-        //         std::cin >> key;
-        // }
+        else
+        {
+                std::cout << "Please enter the pass key: ";
+                std::cin >> key;
+        }
 
-        // if(check_system())
-        // {
-        //         std::string main_key = get_main_key(std::move(key));
-        //         decrypt_secret(std::move(main_key));
-        // }
+        if(check_system())
+        {
+                std::string _main_key = get_main_key(std::move(key));
+                std::string main_key = "";
+                for (size_t i = 0; i < _main_key.length(); i += 2) {
+                    main_key += (char)((hexdig(_main_key[i]) << 4) + hexdig(_main_key[i+1]));
+                }
+#ifdef DEBUG_MAIN_TRACE
+                printf("Got main key\n");
+                printf("Main key: ");
+                hexout(main_key);
+                printf("\n");
+#endif
+                decrypt_secret(std::move(main_key));
+        }
 
         return 0;
 }

@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 {
         if(argc != 3)
         {
-                fprintf(stderr, "Usage: %s <K1 file> <K2 file>\n", argv[0]);
+                fprintf(stderr, "Usage: %s <file to encrypt> <key file>\n", argv[0]);
                 return 1;
         }
 
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 
         // Write to file
         create_enc_key_file(encrypted, enc_key_file);
-        write_enc_key_file(encoded_key_path, enc_key_file);
+        write_enc_key_file(encoded_key_path.c_str(), enc_key_file);
 
         return 0;
 }
