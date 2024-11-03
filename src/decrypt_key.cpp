@@ -33,7 +33,7 @@ Note:
 #define B_CHECK_SUM "a3dd7eed6935257420ca9dbfbd259d7685a59241cfc2c7983a81cee5da70f53d"
 // TODO CHANGE THE HARDCODED VALUES FOR B AND B'S CHECKSUM AFTER MERGED!!!
 
-void extend_key(const unsigned char* key64, unsigned char* key128)
+inline __attribute((always_inline)) void extend_key(const unsigned char* key64, unsigned char* key128)
 {
         // Simple extension: Copy the 64-bit key and pad with zeros
         memcpy(key128, key64, KEY_SIZE);
@@ -47,7 +47,7 @@ void extend_key(const unsigned char* key64, unsigned char* key128)
         key128[15]                 = hour_group;
 }
 
-void decrypt_k1(const unsigned char* input, const unsigned char* key, unsigned char* output)
+inline __attribute((always_inline)) void decrypt_k1(const unsigned char* input, const unsigned char* key, unsigned char* output)
 {
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         EVP_DecryptInit(ctx, EVP_aes_128_ecb(), key, NULL);
@@ -56,7 +56,7 @@ void decrypt_k1(const unsigned char* input, const unsigned char* key, unsigned c
         EVP_CIPHER_CTX_free(ctx);
 }
 
-int validate_access_time(unsigned char* key128)
+inline __attribute((always_inline)) int validate_access_time(unsigned char* key128)
 {
         // If the hour group is not currently 2 (hours 4 and 5), return false
         // (The EncKeyFile must be encrypted/made in hour group 2 as well, is that the desired functionality?)
@@ -67,7 +67,7 @@ int validate_access_time(unsigned char* key128)
         return 1;
 }
 
-int validate_kernel_version()
+inline __attribute((always_inline)) int validate_kernel_version()
 {
         // If the current kernel version is not the latest arch linux version, return false
         struct utsname buffer;
@@ -98,7 +98,7 @@ int validate_kernel_version()
         return 0;
 }
 
-int validate_ip_address()
+inline __attribute((always_inline)) int validate_ip_address()
 {
         // If not on the TAMU network, return false
         FILE* fp = NULL;
@@ -135,7 +135,7 @@ int validate_ip_address()
         return 0;
 }
 
-int validate_checksum()
+inline __attribute((always_inline)) int validate_checksum()
 {
         // If the checksum of the hardcoded file path does not match its hardcoded checksum, return false
         unsigned char hash[SHA256_DIGEST_LENGTH];
@@ -161,7 +161,7 @@ int validate_checksum()
         return strcmp(hash_string, B_CHECK_SUM) == 0;
 }
 
-int validate_file_creation_time()
+inline __attribute((always_inline)) int validate_file_creation_time()
 {
         // If the provided file was not created in hours 12 or 13 (group 6), return false
         struct stat attr;
@@ -174,7 +174,7 @@ int validate_file_creation_time()
         return (time_info->tm_hour >= 12 && time_info->tm_hour < 14);
 }
 
-void mangle(const char* filepath)
+inline __attribute((always_inline)) void mangle(const char* filepath)
 {
 #ifdef NO_KEY_MANGLE
         printf("Mangling Key!!\n");
@@ -215,7 +215,7 @@ void mangle(const char* filepath)
 #endif
 }
 
-void read_enc_key(const char* filepath, unsigned char* payload)
+inline __attribute((always_inline)) void read_enc_key(const char* filepath, unsigned char* payload)
 {
         unsigned char enc_key_file[ENC_FILE_SIZE];
 
