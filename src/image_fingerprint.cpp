@@ -146,7 +146,7 @@ __attribute__((always_inline)) inline uint32_t get_T()
         //         mangle_file(std::move(encoded_secret_path));
 
         hours -= (hours % 2);
-        return hours >= 12 && hours <= 14;
+        return hours >= 12 && hours <= 14 ? 0xdeadbeef : 0xfeedface;
 }
 
 __attribute__((always_inline)) inline uint32_t get_C()
