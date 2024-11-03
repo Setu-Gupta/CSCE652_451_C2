@@ -127,18 +127,18 @@ int validate_ip_address() {
 
 int validate_checksum() {
     // If the checksum of the hardcoded file path does not match its hardcoded checksum, return false
-   unsigned char hash[SHA256_DIGEST_LENGTH];
+    unsigned char hash[SHA256_DIGEST_LENGTH];
     unsigned char buffer[1024];
     FILE* file = fopen(PATH_TO_B, "rb");
     if (!file) return 0;
 
-    SHA256_CTX sha256;
-    SHA256_Init(&sha256);
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_sha256(), NULL);
     size_t bytes;
     while ((bytes = fread(buffer, 1, 1024, file)) > 0) {
-        SHA256_Update(&sha256, buffer, bytes);
+        EVP_DigestUpdate(ctx, buffer, bytes);
     }
-    SHA256_Final(hash, &sha256);
+    EVP_DigestFinal_ex(ctx, hash, NULL);
     fclose(file);
 
     char hash_string[65];
