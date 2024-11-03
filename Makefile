@@ -2,7 +2,7 @@ CC = g++
 FLAGS = -m32 -std=c++23
 CC_FLAGS = -Ofast -flto=auto -static -s
 DBG_FLAGS = -Og -ggdb3 -fsanitize=address,leak,undefined
-ERR_FLAGS = -Wall -Wextra -Wconversion -Wpedantic
+ERR_FLAGS = -Wall -Wextra -Wconversion -Wpedantic -Werror
 LD_FLAGS = -lpthread -lutil -ldl -lm ./libssl.a ./libcrypto.a
 INC_DIR = ./inc
 SRC_DIR = ./src
