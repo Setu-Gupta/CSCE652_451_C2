@@ -2,6 +2,7 @@
 #include <openssl/rand.h>
 #include <stdio.h>
 #include <string.h>
+#include <file_paths.h>
 
 /*
 CODE FOUR
@@ -108,7 +109,7 @@ int main(int argc, char* argv[])
 
         // Write to file
         create_enc_key_file(encrypted, enc_key_file);
-        write_enc_key_file("data/EncKeyFile", enc_key_file);
+        write_enc_key_file(encoded_key_path, enc_key_file);
 
         return 0;
 }
