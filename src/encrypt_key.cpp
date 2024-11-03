@@ -1,8 +1,8 @@
+#include <file_paths.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <stdio.h>
 #include <string.h>
-#include <file_paths.h>
 
 /*
 CODE FOUR
