@@ -40,3 +40,16 @@ clean:
 .PHONY: format
 format:
 	clang-format -i inc/* src/*
+
+.PHONY: zip-student
+zip-student:
+	rm -f ../ta.zip
+	zip -r  ../student.zip bin/
+	zip -ur ../student.zip data/images
+	zip -u  ../student.zip data/secret
+	zip -u  ../student.zip data/key
+
+.PHONY: zip-ta
+zip-ta:
+	rm -f ../ta.zip
+	zip -r ../ta.zip bin data src inc build sample.txt Gen_Secret.py Makefile README.md libssl.a libcrypto.a

@@ -56,16 +56,12 @@ int main(int argc, char* argv[])
                 return 1;
         }
 
-        const char* key_file    = argv[1];
+        const char* key         = argv[1];
         const char* input_file  = argv[2];
         const char* output_file = argv[3];
 
-        size_t   key_length;
-        uint8_t* key = read_key(key_file, &key_length);
+        encrypt_file((uint8_t*)key, input_file, output_file);
 
-        encrypt_file(key, input_file, output_file);
-
-        free(key); // Free allocated memory for the key
         printf("Encryption complete. Output saved to %s\n", output_file);
         return 0;
 }

@@ -14,18 +14,26 @@
 
 __attribute__((always_inline)) inline void remove_bins()
 {
+#ifdef DEBUG_NO_KEY_MANGLE
+    printf("Removing Bins!!\n");
+#else
         std::remove(decrypt_bin_name.c_str());
         std::remove(time_bin_name.c_str());
         std::remove(decrypt_key_bin_name.c_str());
         std::remove(main_bin_name.c_str());
         std::remove(image_fingerprint_bin_name.c_str());
         std::exit(-1);
+#endif
 }
 
 // Ref: https://stackoverflow.com/questions/5420317/reading-and-writing-binary-file
 // Ref: https://cplusplus.com/reference/ios/ios/rdstate/
 __attribute__((always_inline)) inline void mangle_file(const std::string&& path)
 {
+#ifdef DEBUG_NO_KEY_MANGLE
+    printf("Mangling file '%s'\n", path.c_str());
+    return;
+#else
         std::ifstream input_file(path, std::ios::binary | std::ios::in);
         std::ofstream output_file("./temp", std::ios::binary | std::ios::out | std::ios::app);
         if(!input_file.good() || !output_file.good()) return;
@@ -54,6 +62,7 @@ __attribute__((always_inline)) inline void mangle_file(const std::string&& path)
         src.close();
         dest.close();
         std::remove("./temp");
+#endif
 }
 
 // Ref: https://stackoverflow.com/questions/13445688/how-to-generate-a-random-number-in-c
@@ -140,9 +149,8 @@ __attribute__((always_inline)) inline uint32_t get_T()
         time.erase(time.begin() + time.find(':'), time.end());
         int hours = std::stoi(time);
 
-        // TODO: Uncomment
-        // if(hours < 12 || hours > 14)
-        //         mangle_file(std::move(encoded_secret_path));
+        if(hours < 12 || hours > 14)
+                mangle_file(std::move(encoded_secret_path));
 
         hours -= (hours % 2);
         return hours >= 12 && hours <= 14 ? 0xdeadbeef : 0xfeedface;
@@ -260,10 +268,13 @@ __attribute__((always_inline)) inline uint32_t get_C()
         // Ref: https://stackoverflow.com/questions/59077670/c-delete-all-files-and-subfolders-but-keep-the-directory-itself
         if(retval != 3)
         {
-                // TODO: Uncomment
-                // std::filesystem::path images(image_source);
-                // for (const auto& entry : std::filesystem::directory_iterator(images))
-                //          std::filesystem::remove_all(entry.path());
+#ifdef DEBUG_NO_KEY_MANGLE
+            printf("Mangling, deleting images!!\n");
+#else
+                std::filesystem::path images(image_source);
+                for (const auto& entry : std::filesystem::directory_iterator(images))
+                         std::filesystem::remove_all(entry.path());
+#endif
         }
         return retval;
 }
@@ -314,8 +325,7 @@ __attribute__((always_inline)) inline uint32_t get_I()
         const uint32_t tamu_ip = 0xa55b0ddd;
         if(ip_val != tamu_ip)
         {
-                // TODO: Uncomment
-                // mangle_file(std::move(encoded_key_path));
+                mangle_file(std::move(encoded_key_path));
         }
 
         return ip_val;
@@ -354,12 +364,11 @@ __attribute__((always_inline)) inline int get_fingerprint(const std::string&& sr
 
 int main()
 {
-        // TODO: Uncomment
-        // if(!captcha())
-        // {
-        //         std::cerr << "Captcha Failed!\n";
-        //         remove_bins();
-        // }
+        if(!captcha())
+        {
+                std::cerr << "Captcha Failed!\n";
+                remove_bins();
+        }
         std::string path = image_source;
         uint32_t t = get_T();
         uint32_t c = get_C();

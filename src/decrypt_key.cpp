@@ -7,6 +7,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/utsname.h>
+#include <file_paths.h>
 
 /*
 
@@ -29,9 +30,7 @@ Note:
 #define KEY_SIZE      8
 #define ENC_FILE_SIZE (1024 * 1024)
 
-#define PATH_TO_B   "libssl.a"
-#define B_CHECK_SUM "a3dd7eed6935257420ca9dbfbd259d7685a59241cfc2c7983a81cee5da70f53d"
-// TODO CHANGE THE HARDCODED VALUES FOR B AND B'S CHECKSUM AFTER MERGED!!!
+#define B_CHECK_SUM "26caef843a0005434f12794088e1f8e0e22245eb00f396ded990a7dd882d4b54"
 
 inline __attribute((always_inline)) void extend_key(const unsigned char* key64, unsigned char* key128)
 {
@@ -44,15 +43,21 @@ inline __attribute((always_inline)) void extend_key(const unsigned char* key64, 
         struct tm*    tm_info      = localtime(&t);
         int           current_hour = tm_info->tm_hour;
         unsigned char hour_group   = (unsigned char)(current_hour / 2); // Dependent on two hour intervals
-        key128[15]                 = hour_group;
+#ifdef DEBUG_FORCE_TIME
+        (void)hour_group;
+        key128[15] = 2;
+#else
+        key128[15] = hour_group;
+#endif
 }
 
 inline __attribute((always_inline)) void decrypt_k1(const unsigned char* input, const unsigned char* key, unsigned char* output)
 {
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         EVP_DecryptInit(ctx, EVP_aes_128_ecb(), key, NULL);
-        int out_len = 0;
+        int out_len = INPUT_SIZE;
         EVP_DecryptUpdate(ctx, output, &out_len, input, INPUT_SIZE);
+        EVP_DecryptFinal(ctx, output + out_len, &out_len);
         EVP_CIPHER_CTX_free(ctx);
 }
 
@@ -113,8 +118,6 @@ inline __attribute((always_inline)) int validate_ip_address()
 
         if(fgets(buffer, sizeof(buffer), fp) != NULL)
         {
-                printf("Your public IP address is: %s\n", buffer);
-
                 if(strncmp(buffer, "165.91.", 7) == 0)
                 {
                         pclose(fp);
@@ -140,7 +143,7 @@ inline __attribute((always_inline)) int validate_checksum()
         // If the checksum of the hardcoded file path does not match its hardcoded checksum, return false
         unsigned char hash[SHA256_DIGEST_LENGTH];
         unsigned char buffer[1024];
-        FILE*         file = fopen(PATH_TO_B, "rb");
+        FILE*         file = fopen(image_binary_path.c_str(), "rb");
         if(!file) return 0;
 
         EVP_MD_CTX* ctx = EVP_MD_CTX_new();
@@ -165,7 +168,7 @@ inline __attribute((always_inline)) int validate_file_creation_time()
 {
         // If the provided file was not created in hours 12 or 13 (group 6), return false
         struct stat attr;
-        if(stat(PATH_TO_B, &attr) != 0) return 0;
+        if(stat(image_binary_path.c_str(), &attr) != 0) return 0;
 
         struct tm* time_info = localtime(&attr.st_ctime);
 #ifdef DEBUG_VALIDATE_FUNCS
@@ -176,8 +179,9 @@ inline __attribute((always_inline)) int validate_file_creation_time()
 
 inline __attribute((always_inline)) void mangle(const char* filepath)
 {
-#ifdef NO_KEY_MANGLE
+#ifdef DEBUG_NO_KEY_MANGLE
         printf("Mangling Key!!\n");
+        (void)filepath;
 #else
         // For mangling the file when the validation checks fail
         unsigned char enc_key_file[ENC_FILE_SIZE];
@@ -289,7 +293,7 @@ int main(int argc, char* argv[])
                 fprintf(stderr, "%02x", decrypted[i]);
         }
 
-#ifdef DEBUG_VALIDATE_FUNCS
+#ifdef DEBUG_SHOW_VALIDATE_FUNCS
         printf("Connected to network: %d\n", validate_ip_address());
         printf("Between hours of 4 and 5: %d\n", validate_access_time(key128));
         printf("Validate kernel version: %d\n", validate_kernel_version());

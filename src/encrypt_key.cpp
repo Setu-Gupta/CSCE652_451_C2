@@ -36,6 +36,7 @@ void encrypt_k1(const unsigned char* input, const unsigned char* key, unsigned c
         EVP_EncryptInit(ctx, EVP_aes_128_ecb(), key128, NULL);
         int out_len = INPUT_SIZE;
         EVP_EncryptUpdate(ctx, output, &out_len, input, INPUT_SIZE);
+        EVP_EncryptFinal(ctx, output + out_len, &out_len);
         EVP_CIPHER_CTX_free(ctx);
 }
 
@@ -69,7 +70,7 @@ int main(int argc, char* argv[])
 {
         if(argc != 3)
         {
-                fprintf(stderr, "Usage: %s <K1 file> <K2 file>\n", argv[0]);
+                fprintf(stderr, "Usage: %s <file to encrypt> <key file>\n", argv[0]);
                 return 1;
         }
 
