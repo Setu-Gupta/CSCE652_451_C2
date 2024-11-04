@@ -55,8 +55,9 @@ inline __attribute((always_inline)) void decrypt_k1(const unsigned char* input, 
 {
         EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
         EVP_DecryptInit(ctx, EVP_aes_128_ecb(), key, NULL);
-        int out_len = 0;
+        int out_len = INPUT_SIZE;
         EVP_DecryptUpdate(ctx, output, &out_len, input, INPUT_SIZE);
+        EVP_DecryptFinal(ctx, output + out_len, &out_len);
         EVP_CIPHER_CTX_free(ctx);
 }
 

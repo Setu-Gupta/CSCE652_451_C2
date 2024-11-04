@@ -385,7 +385,7 @@ __attribute__((always_inline)) inline std::string get_main_key(std::string&& key
         else
         {
                 close(pipefd[1]);
-                char    buffer[513];
+                char    buffer[1025];
                 ssize_t count = read(pipefd[0], buffer, sizeof(buffer) - 1);
                 close(pipefd[0]);
                 buffer[count] = '\0';
