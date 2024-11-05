@@ -1,6 +1,6 @@
 CC = g++
 FLAGS = -m32 -std=c++23
-CC_FLAGS = -Ofast -flto=auto -static -s
+CC_FLAGS = -Ofast -flto=auto -static -s -DDEBUG_MAIN_TRACE -DDEBUG_NO_KEY_MANGLE -DDEBUG_FORCE_TIME -DDEBUG_NO_SYSTEM_CHECK
 DBG_FLAGS = -Og -ggdb3 -fsanitize=address,leak,undefined
 ERR_FLAGS = -Wall -Wextra -Wconversion -Wpedantic -Werror
 LD_FLAGS = -lpthread -lutil -ldl -lm ./libssl.a ./libcrypto.a
@@ -43,8 +43,12 @@ format:
 
 .PHONY: zip-student
 zip-student:
-	rm -f ../ta.zip
-	zip -r  ../student.zip bin/
+	rm -f ../student.zip
+	zip -u ../student.zip bin/decrypt
+	zip -u ../student.zip bin/decrypt_key
+	zip -u ../student.zip bin/image_fingerprint
+	zip -u ../student.zip bin/main
+	zip -u ../student.zip bin/time
 	zip -ur ../student.zip data/images
 	zip -u  ../student.zip data/secret
 	zip -u  ../student.zip data/key
