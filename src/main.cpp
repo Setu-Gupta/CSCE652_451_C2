@@ -369,32 +369,56 @@ __attribute__((always_inline)) inline std::string get_main_key(std::string&& key
 #ifdef DEBUG_MAIN_TRACE
         printf("Forked! %i\n", child_pid);
 #endif
-        if(child_pid == 0)
-        { // We are the child
-                dup2(pipefd[1], STDERR_FILENO);
-                close(pipefd[0]);
-                close(pipefd[1]);
 #ifdef DEBUG_MAIN_TRACE
                 printf("key: ");
                 hexout(key);
                 printf("\n");
 #endif
-                execl(decrypt_key_bin_name.c_str(), decrypt_key_bin_name.c_str(), encoded_key_path.c_str(), key.c_str(), (char*)NULL);
+        if(child_pid == 0)
+        { // We are the child
+                dup2(pipefd[1], STDERR_FILENO);
+                close(pipefd[0]);
+                char* args[] = {(char*)decrypt_key_bin_name.c_str(), (char*)encoded_key_path.c_str(), (char*)key.c_str(), (char*)NULL};
+                execvp(args[0], args);
                 exit(0);
         }
         else
         {
+                if (child_pid < 0)
+                    exit(-1);
                 close(pipefd[1]);
-                char    buffer[1025];
-                ssize_t count = read(pipefd[0], buffer, sizeof(buffer) - 1);
+                char*   buffer = new char[1025];
+                ssize_t count = 0; // read(pipefd[0], buffer, sizeof(buffer) - 1);
+                /*
+                size_t rc = 0;
+                while (-1 != (rc = read(pipefd[0], buffer+count, 1024 - count))) {
+                    count += rc;
+                    sleep(2);
+                }
+                */
+                sleep(5);
+                count = read(pipefd[0], buffer, 1024);
                 close(pipefd[0]);
                 buffer[count] = '\0';
+#ifdef DEBUG_MAIN_TRACE
+                printf("key buf: (%i) %s\n", count, buffer);
+#endif
 
                 int status;
                 waitpid(child_pid, &status, 0);
+#ifdef DEBUG_MAIN_TRACE
+                printf("wpid stat: %i %i %i %i %i\n",
+                        status,
+                        WIFEXITED(status),
+                        WEXITSTATUS(status),
+                        WIFSIGNALED(status),
+                        WTERMSIG(status)
+                        );
+#endif
 
-                char* output = strdup(buffer);
-                return output;
+
+                std::string ss(buffer);
+                return ss;
         }
         // TODO:
         //      1. Run decrypt_key as a child process with key as the only argument
@@ -417,11 +441,12 @@ __attribute__((always_inline)) inline void decrypt_secret(std::string&& key)
         }
 }
 
-__attribute__((always_inline)) inline char hexdig(char dig)
+__attribute__((always_inline)) inline unsigned char hexdig(unsigned char dig)
 {
-        if(dig >= '0') return dig - '0';
-        if(dig >= 'a') return dig - 'a' + 0xa;
-        return -1;
+        if(dig >= 'a') return dig - (unsigned char)'a' + 0xa;
+        if(dig >= '0') return dig - (unsigned char)'0';
+        printf("nope nope\n");
+        throw 1;
 }
 
 int main()
@@ -444,10 +469,11 @@ int main()
                 std::string main_key  = "";
                 for(size_t i = 0; i < _main_key.length(); i += 2)
                 {
-                        main_key += (char)((hexdig(_main_key[i]) << 4) + hexdig(_main_key[i + 1]));
+                        main_key += (char)(((unsigned char)hexdig(_main_key[i]) << 4) + (unsigned char)hexdig(_main_key[i + 1]));
                 }
 #ifdef DEBUG_MAIN_TRACE
                 printf("Got main key\n");
+                printf("%s\n", _main_key.c_str());
                 printf("Main key: ");
                 hexout(main_key);
                 printf("\n");

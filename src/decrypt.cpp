@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 inline __attribute__((always_inline)) void encrypt_file(const uint8_t* key, const char* input_file, const char* output_file)
 {
@@ -56,7 +57,8 @@ int main(int argc, char* argv[])
                 return 1;
         }
 
-        const char* key         = argv[1];
+        char key[512];
+        strncpy(key, argv[1], 512);
         const char* input_file  = argv[2];
         const char* output_file = argv[3];
 
