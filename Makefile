@@ -1,6 +1,6 @@
 CC = g++
 FLAGS = -m32 -std=c++23
-CC_FLAGS = -Ofast -flto=auto -static -s -DDEBUG_MAIN_TRACE -DDEBUG_NO_KEY_MANGLE -DDEBUG_FORCE_TIME -DDEBUG_NO_SYSTEM_CHECK
+CC_FLAGS = -Ofast -flto=auto -static -s
 DBG_FLAGS = -Og -ggdb3 -fsanitize=address,leak,undefined
 ERR_FLAGS = -Wall -Wextra -Wconversion -Wpedantic -Werror
 LD_FLAGS = -lpthread -lutil -ldl -lm ./libssl.a ./libcrypto.a
